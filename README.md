@@ -1,4 +1,5 @@
 # Savesink
+Yes the name is intentional...
 
 ## Description 
 Savesink is a CLI program for managing save data between devices. 
