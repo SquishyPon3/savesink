@@ -9,6 +9,7 @@ edition = "2021"
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4.4.12", features = ["derive"] }
 dirs-next = "2.0.0"
+toml = "0.8.8"
 
 [dependencies.cursive]
 version = "0.20.0"
