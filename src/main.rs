@@ -4,6 +4,7 @@ use dirs_next::document_dir;
 use std::fs::File;
 use clap::Parser;
 use toml::Table;
+use serde::Deserialize;
 
 mod args;
 use args::{Cli, Commands};
@@ -55,6 +56,17 @@ struct SaveData {
     id: u32,
     source: Source,
     creation_date: OffsetDateTime
+}
+
+#[derive(Deserialize)]
+struct Saves {
+    saves: Vec<SaveInfo>
+}
+
+#[derive(Deserialize)]
+struct SaveInfo {
+    name: String,
+    path: String
 }
 
 fn prompt_quit() {
@@ -155,9 +167,11 @@ fn main() {
                 let save_map_text = std::fs::read_to_string(file_path)
                     .expect("Failed to read save_map.toml");
 
-                let save_map = save_map_text.parse::<Table>().unwrap();
+                let save_map: Saves = toml::from_str(&save_map_text).unwrap();
 
-                println!("{}", save_map);
+                for save in save_map.saves {
+                    println!("Name {}\nPath {}\n", save.name, save.path);
+                }
             }
         },
         None => {}
