@@ -1,8 +1,9 @@
-use std::{path::{Path, PathBuf}, process::exit, io::{Write, self}};
+use std::{path::{Path, PathBuf}, process::exit, io::{Write, self, Read}};
 use cursive::{reexports::time::OffsetDateTime, logger::init};
 use dirs_next::document_dir;
 use std::fs::File;
 use clap::Parser;
+use toml::Table;
 
 mod args;
 use args::{Cli, Commands};
@@ -115,8 +116,6 @@ fn init_save_map(saves: &SaveDir) -> Result<File, std::io::Error>{
     return save_map;
 }
 
-
-
 fn main() {
     let cli = Cli::parse();
 
@@ -129,7 +128,37 @@ fn main() {
         },
         Some (Commands::Delete) => {
             
+        },
+        Some (Commands::Add { name, path }) => {
+            println!("Adding {name} save data from {path} to tracker");
+        },
+        Some (Commands::Remove { name }) => {
+            println!("Removing {name} save data from tracker")
+        },
+        Some (Commands::Sync) => {
+            let saves = SaveDir::new()
+            .expect("Unable to locate savesink directory.");
 
+            
+
+            for file in std::fs::read_dir(saves.path).unwrap() {
+
+                //println!("Name: {}", file.unwrap().path().display());
+
+                let file_path = file.unwrap().path();
+
+                if file_path.file_name().unwrap() != "save_map.toml" {
+                    continue;
+                }          
+
+                // Read from save_map.toml into a parsable string
+                let save_map_text = std::fs::read_to_string(file_path)
+                    .expect("Failed to read save_map.toml");
+
+                let save_map = save_map_text.parse::<Table>().unwrap();
+
+                println!("{}", save_map);
+            }
         },
         None => {}
     }
