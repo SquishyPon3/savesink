@@ -60,6 +60,7 @@ struct SaveData {
 
 #[derive(Deserialize)]
 struct Saves {
+    save_data_tracker: String,
     saves: Vec<SaveInfo>
 }
 
@@ -151,8 +152,6 @@ fn main() {
             let saves = SaveDir::new()
             .expect("Unable to locate savesink directory.");
 
-            
-
             for file in std::fs::read_dir(saves.path).unwrap() {
 
                 //println!("Name: {}", file.unwrap().path().display());
@@ -169,8 +168,23 @@ fn main() {
 
                 let save_map: Saves = toml::from_str(&save_map_text).unwrap();
 
+                println!("Syncing save data...");
                 for save in save_map.saves {
-                    println!("Name {}\nPath {}\n", save.name, save.path);
+                    println!("\nName {}\nPath {}", save.name, save.path);
+
+                    let save_data_path = std::fs::read_dir(&save_map.save_data_tracker).unwrap();
+
+                    // Iterates through save data in the save data path, finds each "save",
+                    // and prints whether or not it found this save within the
+                    // save_map.toml file
+                    for save_data in save_data_path {
+                        let save_folder = save_data.unwrap();
+                        let name = save_folder.file_name();
+
+                        if name.to_string_lossy() == save.name {
+                            println!("Found {}!", save.name);
+                        }
+                    }
                 }
             }
         },
