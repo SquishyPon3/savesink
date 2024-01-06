@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}, process::exit, io::{Write, self, Read}};
+use std::{path::{Path, PathBuf, self}, process::exit, io::{Write, self, Read}, fs::ReadDir};
 use cursive::{reexports::time::OffsetDateTime, logger::init};
 use dirs_next::document_dir;
 use std::fs::File;
@@ -28,6 +28,10 @@ impl SaveDir {
         }
 
         return Some(Self { path: saves });
+    }
+
+    fn get_save_files(self) -> io::Result<ReadDir> {
+        return std::fs::read_dir(self.path);
     }
 }
 
@@ -149,45 +153,74 @@ fn main() {
             println!("Removing {name} save data from tracker")
         },
         Some (Commands::Sync) => {
+            // -local -remote
+            sync();
+        },
+        Some (Commands::Commit) => {
+
+        },
+        Some (Commands::Push) => {
+
+        }
+        Some (Commands::List { verbose }) => {
             let saves = SaveDir::new()
-            .expect("Unable to locate savesink directory.");
+                .expect("Unable to locate savesink directory.")
+                .get_save_files()
+                .unwrap();
 
-            for file in std::fs::read_dir(saves.path).unwrap() {
-
-                //println!("Name: {}", file.unwrap().path().display());
-
-                let file_path = file.unwrap().path();
-
-                if file_path.file_name().unwrap() != "save_map.toml" {
-                    continue;
-                }          
-
-                // Read from save_map.toml into a parsable string
-                let save_map_text = std::fs::read_to_string(file_path)
-                    .expect("Failed to read save_map.toml");
-
-                let save_map: Saves = toml::from_str(&save_map_text).unwrap();
-
-                println!("Syncing save data...");
-                for save in save_map.saves {
-                    println!("\nName {}\nPath {}", save.name, save.path);
-
-                    let save_data_path = std::fs::read_dir(&save_map.save_data_tracker).unwrap();
-
-                    // Iterates through save data in the save data path, finds each "save",
-                    // and prints whether or not it found this save within the
-                    // save_map.toml file
-                    for save_data in save_data_path {
-                        let save_folder = save_data.unwrap();
-                        let name = save_folder.file_name();
-
-                        if name.to_string_lossy() == save.name {
-                            println!("Found {}!", save.name);
-                        }
-                    }
+            for file in saves {
+                if *verbose == false {
+                    println!("{}", file.unwrap().file_name().to_string_lossy())
+                }
+                else {
+                    println!("{}", file.unwrap().path().to_string_lossy())
                 }
             }
-        },
+        }
         None => {}
+    }
+}
+
+fn sync() {
+
+    let saves = SaveDir::new()
+        .expect("Unable to locate savesink directory.")
+        .get_save_files()
+        .unwrap();
+
+    for file in saves {
+
+        //println!("Name: {}", file.unwrap().path().display());
+
+        let file_path = file.unwrap().path();
+
+        if file_path.file_name().unwrap() != "save_map.toml" {
+            continue;
+        }          
+
+        // Read from save_map.toml into a parsable string
+        let save_map_text = std::fs::read_to_string(file_path)
+            .expect("Failed to read save_map.toml");
+
+        let save_map: Saves = toml::from_str(&save_map_text).unwrap();
+
+        println!("Syncing save data...");
+        for save in save_map.saves {
+            println!("\nName {}\nPath {}", save.name, save.path);
+
+            let save_data_path = std::fs::read_dir(&save_map.save_data_tracker).unwrap();
+
+            // Iterates through save data in the save data path, finds each "save",
+            // and prints whether or not it found this save within the
+            // save_map.toml file
+            for save_data in save_data_path {
+                let save_folder = save_data.unwrap();
+                let name = save_folder.file_name();
+
+                if name.to_string_lossy() == save.name {
+                    println!("Found {}!", save.name);
+                }
+            }
+        }
     }
 }

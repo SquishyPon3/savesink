@@ -12,6 +12,8 @@ pub struct Cli {
     pub command: Option<Commands>
 }
 
+// Thinking of organizing commands like git commands 
+// in order to be user familiar, needs some refactoring
 #[derive(Subcommand)] 
 pub enum Commands {
     /// Creates a new savesink data folder
@@ -31,5 +33,14 @@ pub enum Commands {
         name: String,
     },
     /// Sync local save data with remote save data
-    Sync
+    Sync,
+    /// Commit local save data differences from source folders to local save data
+    Commit,
+    /// Push local save data to remote
+    Push,
+    /// List local save data
+    List {
+        #[arg(short,long)]
+        verbose: bool,
+    }
 }
