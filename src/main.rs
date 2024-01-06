@@ -140,27 +140,28 @@ fn main() {
         Some(Commands::Create) => {
             // Would prefer not to use "expect", it seems that I am not 
             // correctly returning an Option? It is confusing.
-            let saves = init_dir().expect("Cannot find file");
+            let saves = init_dir().expect("Failed to initialize savesink directory!");
             let save_map = init_save_map(&saves);
         },
         Some (Commands::Delete) => {
-            
+            println!("Unimplemented: Deleting savesink tracker.")
         },
         Some (Commands::Add { name, path }) => {
-            println!("Adding {name} save data from {path} to tracker");
+            println!("Unimplemented: Adding {name} save data from {path} to tracker.");
         },
         Some (Commands::Remove { name }) => {
-            println!("Removing {name} save data from tracker")
+            println!("Unimplemented: Removing {name} save data from tracker.")
         },
         Some (Commands::Sync) => {
             // -local -remote
+            println!("Incomplete: Syncing local save data from remote.");
             sync();
         },
         Some (Commands::Commit) => {
-
+            println!("Unimplemented: committing source save data to local.")
         },
         Some (Commands::Push) => {
-
+            println!("Unimplemented: pushing local save data to remote.")
         }
         Some (Commands::List { verbose }) => {
             let saves = SaveDir::new()
