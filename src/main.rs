@@ -1,5 +1,10 @@
-use std::{path::{Path, PathBuf, self}, process::exit, io::{Write, self, Read}, fs::ReadDir};
-use cursive::{reexports::time::OffsetDateTime, logger::init};
+use core::time;
+use std::{
+    path::{Path, PathBuf, self}, 
+    process::exit, 
+    io::{Write, self, Read}, 
+    fs::{ReadDir, read_to_string, read_dir}};
+use cursive::{reexports::time::{OffsetDateTime, Date}, logger::init};
 use dirs_next::document_dir;
 use fs_extra::dir::CopyOptions;
 use std::fs::File;
@@ -72,7 +77,7 @@ struct Saves {
 #[derive(Deserialize)]
 struct SaveInfo {
     name: String,
-    path: String
+    source: String
 }
 
 fn prompt_quit() {
@@ -209,7 +214,7 @@ fn sync() {
 
         println!("Syncing save data...");
         for save in save_map.saves {
-            println!("\nName {}\nPath {}", save.name, save.path);
+            println!("\nName {}\nPath {}", save.name, save.source);
 
             let save_data_path = std::fs::read_dir(&save_map.save_data_tracker).unwrap();
 
@@ -246,50 +251,40 @@ fn commit() {
         }          
 
         // Read from save_map.toml into a parsable string
-        let save_map_text = std::fs::read_to_string(file_path)
-            .expect("Failed to read save_map.toml");
 
-        let save_map: Saves = toml::from_str(&save_map_text).unwrap();
+        let save_map: Saves = toml::from_str(
+            &read_to_string(file_path)
+                .expect("Failed to read save_map.toml
+            ")).unwrap();
 
         println!("Committing save data...");
+        
         for save in save_map.saves {
-            println!("\nName {}\nPath {}", save.name, save.path);
+            println!("\nName {}\nPath {}", save.name, save.source);
 
-            let save_data_path = std::fs::read_dir(&save_map.save_data_tracker).unwrap();
+            let tracker = read_dir(&save_map.save_data_tracker).unwrap();
 
             // Iterates through save data in the save data path, finds each "save",
             // and prints whether or not it found this save within the
             // save_map.toml file
-            for save_data in save_data_path {
-                let save_folder = save_data.unwrap();
+            for tracked_data in tracker {
+                let save_folder = tracked_data.unwrap();
                 let name = save_folder.file_name();
 
                 if name.to_string_lossy() == save.name {
                     println!("Found {}!", save.name);
+
+                    // TODO: Create a new folder containing a new copy of the save data.
+                    // This should be either given some index value or a random id.
                     
-                    for file in std::fs::read_dir(&save.path).unwrap() {
-                        let data = file.unwrap();
+                    for source_data in read_dir(&save.source).unwrap() {
+                        let data = source_data.unwrap();
                         
                         println!("Copying {} to {}", data.file_name().to_string_lossy(), save_folder.path().to_string_lossy());
                         fs_extra::copy_items(&[data.path()], save_folder.path(), &CopyOptions::new()).expect("Failed to copy file!");
                     }
                 }
             }
-
-            // Cannot copy entire path, need to copy individual files
-            // for save_data in save_data_path {
-            //     let save_folder = save_data.unwrap();
-            //     let name = save_folder.file_name();
-
-            //     if name.to_string_lossy() == save.name {
-            //         println!("Found {}!", save.name);
-                    
-            //         println!("Copying contents of {} to {}", &save.path, save_folder.path().to_string_lossy() + "\\");
-            //         for data in std::fs::read_dir(&save.path) {
-            //             std::fs::copy(data.path(), save_folder.path()).expect("Failed to copy file!");
-            //         }
-            //     }
-            // }
         }
     }
 }
