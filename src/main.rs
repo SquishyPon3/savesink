@@ -76,6 +76,11 @@ struct Saves {
 
 #[derive(Deserialize)]
 struct SaveInfo {
+    // This could also contain a list / three distinct backup paths
+    // that will be generated into save_map.toml
+    // May also contain date of creation / modification
+    // as well as some sort of unique ID
+
     name: String,
     source: String
 }
@@ -160,10 +165,20 @@ fn main() {
         },
         Some (Commands::Sync) => {
             // -local -remote
+
+            // TODO make subfolders in save dir named:
+            // Save_yyMMddhhmmss || Save_n_yyMMddhhmmss
+
+            // If remote save data is older than local save data prompt the user
+            // y / n for whether they are sure they want to proceed. --force skips this
+            // warning prompt
             println!("Incomplete: Syncing local save data from remote.");
             sync();
         },
         Some (Commands::Commit) => {
+            // TODO make subfolders in save dir named:
+            // Save_yyMMddhhmmss || Save_n_yyMMddhhmmss
+
             //println!("Unimplemented: committing source save data to local.")
             commit();
         },
@@ -191,12 +206,12 @@ fn main() {
 
 fn sync() {
 
-    let saves = SaveDir::new()
+    let save_dir_files = SaveDir::new()
         .expect("Unable to locate savesink directory.")
         .get_save_files()
         .unwrap();
 
-    for file in saves {
+    for file in save_dir_files {
 
         //println!("Name: {}", file.unwrap().path().display());
 
@@ -235,12 +250,12 @@ fn sync() {
 
 fn commit() {
 
-    let saves = SaveDir::new()
+    let save_dir_files = SaveDir::new()
         .expect("Unable to locate savesink directory.")
         .get_save_files()
         .unwrap();
 
-    for file in saves {
+    for file in save_dir_files {
 
         //println!("Name: {}", file.unwrap().path().display());
 
