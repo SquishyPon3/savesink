@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf, self}, 
     process::exit, 
     io::{Write, self, Read}, 
-    fs::{ReadDir, read_to_string, read_dir}};
+    fs::{ReadDir, read_to_string, read_dir, create_dir}};
 use cursive::{reexports::time::{OffsetDateTime, Date}, logger::init};
 use dirs_next::document_dir;
 use fs_extra::dir::CopyOptions;
@@ -11,6 +11,8 @@ use std::fs::File;
 use clap::Parser;
 use toml::Table;
 use serde::Deserialize;
+
+use chrono::{Datelike, Timelike, Utc};
 
 mod args;
 use args::{Cli, Commands};
@@ -292,14 +294,61 @@ fn commit() {
                     // TODO: Create a new folder containing a new copy of the save data.
                     // This should be either given some index value or a random id.
                     
-                    for source_data in read_dir(&save.source).unwrap() {
-                        let data = source_data.unwrap();
-                        
-                        println!("Copying {} to {}", data.file_name().to_string_lossy(), save_folder.path().to_string_lossy());
-                        fs_extra::copy_items(&[data.path()], save_folder.path(), &CopyOptions::new()).expect("Failed to copy file!");
-                    }
+                    commit_to_local_save(save_folder, &save);
                 }
             }
         }
+    }
+}
+
+fn commit_to_local_save(save_folder: std::fs::DirEntry, save: &SaveInfo) {
+    let now = Utc::now();
+    let (is_common_era, year) = now.year_ce();
+
+    // Could add an index after save and before time, for simpler reading
+    // through programmatically but I'm not sure.
+    let folder_name = format!(
+        "save_{}-{:02}-{:02}_{:02}-{:02}-{:02}", 
+        year, 
+        now.month(), 
+        now.day(), 
+        now.hour(), 
+        now.minute(), 
+        now.second());
+
+    let output_path = save_folder.path().join(Path::new(folder_name.as_str()));
+    let output_path_str = output_path.to_string_lossy();
+
+    match create_dir(&output_path) {
+        Err(e) => {
+            println!("Failed to create save directory at: {output_path_str}\n Error: {e}");
+            prompt_quit();
+        },
+        Ok(()) => {
+            println!("Successfully created save directory: {}", output_path_str)
+        }
+    };
+
+    for source_data in read_dir(&save.source).unwrap() {
+    
+        let data = source_data.unwrap();
+        let file_os_str = data.file_name();
+        let file_name = file_os_str.to_string_lossy();
+
+        println!(
+            "Copying {} to {}",
+            file_name, 
+            output_path_str);
+
+        match fs_extra::copy_items(&[data.path()], &output_path, 
+        &CopyOptions::new()) {
+            Err(e) => {
+                println!("Failed to copy {file_name} to {output_path_str} {e}");
+                prompt_quit();
+            },
+            Ok(result) => {
+                println!("Successfully copy {file_name} to {output_path_str}")
+            }
+        };
     }
 }
