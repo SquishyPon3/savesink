@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf, self}, 
     process::exit, 
     io::{Write, self, Read}, 
-    fs::{ReadDir, read_to_string, read_dir, create_dir}};
+    fs::{ReadDir, read_to_string, read_dir, create_dir}, env::{current_dir, current_exe}};
 use cursive::{reexports::time::{OffsetDateTime, Date}, logger::init};
 use dirs_next::document_dir;
 use fs_extra::dir::CopyOptions;
@@ -201,8 +201,15 @@ fn main() {
                     println!("{}", file.unwrap().path().to_string_lossy())
                 }
             }
-        }
+        },
         None => {}
+        // Was thinking of adding this to find the current directory
+        // but I need to do a bit more research to figure this out.
+        // Some (Commands::Where) => {
+        //     println!("{}", current_exe()
+        //         .expect("Failed to locate savesink installation!")
+        //         .to_string_lossy());
+        // }
     }
 }
 
