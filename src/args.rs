@@ -32,6 +32,7 @@ pub enum Commands {
         #[arg(short,long, value_name = "STRING")]
         name: String,
     },
+    Pull,
     /// Sync local save data with remote save data
     Sync,
     /// Commit local save data differences from source folders to local save data
@@ -42,5 +43,17 @@ pub enum Commands {
     List {
         #[arg(short,long)]
         verbose: bool,
+    },
+    Server {
+        #[command(subcommand)]
+        command: Option<ServerCommands>
     }
+}
+
+#[derive(Subcommand)]
+pub enum ServerCommands {
+    /// Launch a new server instance
+    Start,
+    /// Shutdown existing server instancce
+    Stop
 }

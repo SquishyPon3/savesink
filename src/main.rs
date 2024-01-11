@@ -4,7 +4,7 @@ use std::{
     process::exit, 
     io::{Write, self, Read}, 
     fs::{ReadDir, read_to_string, read_dir, create_dir}, env::{current_dir, current_exe}};
-use cursive::{reexports::time::{OffsetDateTime, Date}, logger::init};
+use cursive::{reexports::time::{OffsetDateTime, Date}, logger::init, backends::curses::pan::pancurses::OK};
 use dirs_next::document_dir;
 use fs_extra::dir::CopyOptions;
 use std::fs::File;
@@ -15,7 +15,11 @@ use serde::Deserialize;
 use chrono::{Datelike, Timelike, Utc};
 
 mod args;
-use args::{Cli, Commands};
+use args::{Cli, Commands, ServerCommands};
+mod server;
+use server::start_server;
+
+use crate::server::connect;
 
 struct SaveDir {
     path: PathBuf
@@ -165,6 +169,10 @@ fn main() {
         Some (Commands::Remove { name }) => {
             println!("Unimplemented: Removing {name} save data from tracker.")
         },
+        Some(Commands::Pull) => {
+            println!("Unimplemented: Pulling save data changes from remote.");
+            connect();
+        },
         Some (Commands::Sync) => {
             // -local -remote
 
@@ -200,6 +208,18 @@ fn main() {
                 else {
                     println!("{}", file.unwrap().path().to_string_lossy())
                 }
+            }
+        },
+        Some (Commands::Server { command }) => {
+            match command {
+                Some(ServerCommands::Start) => {
+                    println!("Starting up server...");
+                    server::start_server();
+                },
+                Some(ServerCommands::Stop) => {
+                    println!("Server shutting down...");
+                }
+                None => {}
             }
         },
         None => {}
